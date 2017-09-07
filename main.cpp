@@ -1,15 +1,72 @@
 #include <iostream>
+#include <string>
 
 /*
 * SLOVNIK
-* èeskı slovník implementovanı pomocí vyhledávacího stromu.
-* Kadı uzel obsahuje písmeno a bool, zda-li cesta stromem konèící tímto písmenem je slovo.
-* Interakce s uivatelem probíhá pomocí konzole, slovník je schopnı analyzovat text oddìlenı mezerami a interpunkcí v souboru a najít chybnì napsaná slova.
-* Slovník vıslednì chybnì napsaná slova buï pouze vypíše èi rovnou opraví v souboru, slovo po slovì.
-* Slovník je nutno nahrát do pamìti
+* anglickÃ½ slovnÃ­k implementovanÃ½ pomocÃ­ vyhledÃ¡vacÃ­ho stromu.
+* KaÅ¾dÃ½ uzel obsahuje pÃ­smeno a bool, zda-li cesta stromem konÃ¨Ã­cÃ­ tÃ­mto pÃ­smenem je slovo.
+* Interakce s uÅ¾ivatelem probÃ­hÃ¡ pomocÃ­ konzole, slovnÃ­k je schopnÃ½ analyzovat text oddÃ¬lenÃ½ mezerami a interpunkcÃ­ v souboru a najÃ­t chybnÃ¬ napsanÃ¡ slova.
+* SlovnÃ­k vÃ½slednÃ¬ chybnÃ¬ napsanÃ¡ slova buÃ¯ pouze vypÃ­Å¡e Ã¨i rovnou opravÃ­ v souboru, slovo po slovÃ¬.
+* SlovnÃ­k je nutno nahrÃ¡t do pamÃ¬ti
+* Mapa znakÅ¯:
+* 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25
+* a b c d e f g h i j k  l  m  n  o  p  q  r  s  t  u  v  w  x  y  z
 */
 
 using namespace std;
+
+struct node{
+    int letter;
+    bool isWord;
+    node*next[26];
+};
+
+node*root = NULL;
+
+void addNode(int k, string d)
+{
+    // dva ukazatele, prvnim hledam, druhym hlidam predchozi node (abych to pak mohl spojit)
+    node* p = koren;
+    node* predchozi = NULL;
+
+    while (p!=NULL)
+    {
+        if (k < p->klic)
+        {
+            predchozi = p;
+            p = p->mensi;
+        }
+        else if (k > p->klic)
+        {
+            predchozi = p;
+            p = p->vetsi;
+        }
+        else
+        {
+            // dorazili jsme na node, ktery uz je obsazeny, co delat?
+            return;
+        }
+    }
+    // klic nebyl ve stromu
+
+    node* u = new node;
+    u->klic = k;
+    u->data = d;
+    u->mensi = NULL;
+    u->vetsi = NULL;
+    if (predchozi == NULL)
+    {
+        koren = u;
+    }
+    else if (k < predchozi->klic)
+    {
+        predchozi->mensi = u;
+    }
+    else
+    {
+        predchozi->vetsi = u;
+    }
+}
 
 int main()
 {
