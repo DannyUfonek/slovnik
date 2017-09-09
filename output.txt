@@ -1,0 +1,17 @@
+Spellcheck textu z text.txt
+ Chybna slova:
+sound-echoes
+mouth-clicks.
+biosonar
+head-related
+(HRTF)
+spectro-temporal
+60°
+spectro-temporal
+2-4kHz,
+10kHz.
+2-8kHz,
+echolocator.
+biosonar.
+spectro-temporal
+Spellcheck ukoncen. Chybnych slov: 14

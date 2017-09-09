@@ -28,23 +28,9 @@ Node*root = NULL;
 
 
 const char* DICTPATH = "dictionary.txt";
+const char* OUTPATH = "output.txt";
 Node* endOfString(string s, bool isInsert);
 bool dictReady = false;
-
-/*
-bool isPrefix(string s)
-{
-    Node* current = endOfString(s, false);
-    if (current == NULL)
-    {
-        return false;
-    }
-    else
-    {
-        return true;
-    }
-}
-*/
 
 bool isWord(string s)
 {
@@ -63,8 +49,15 @@ bool isWord(string s)
 void insertWord(string s)
 {
     Node* current = endOfString(s, true);
-    current->isWord = true;
-    cout << "slovo " << s << " pridano"  << endl;
+    if (current->isWord == false)
+    {
+        current->isWord = true;
+        //cout << "slovo " << s << " pridano"  << endl;
+    }
+    else
+    {
+        //cout << "toto slovo jiz ve slovniku je" << endl;
+    }
 }
 
 //vyrobi novy node na miste current
@@ -78,6 +71,18 @@ void initNode(Node* &current)
     }
 }
 
+void delNode(Node* parent)
+{
+    // rekurzivni mazani stromu
+    for (int i = 0; i < alphabetSize; i++)
+    {
+        if (parent->child[i] != NULL)
+            delNode(parent->child[i]);
+    }
+    delete parent;
+}
+
+
 //hlavni funkce, vraci ukazatel na posledni pismeno hledaneho/pridavaneho slova
 //isInsert tells it whether it needs to initialize new Nodes
 Node* endOfString(string s, bool isInsert)
@@ -90,7 +95,7 @@ Node* endOfString(string s, bool isInsert)
         // takhle se i zbavime carek a tecek
         if (std::isalpha(s[i]) != 0)
         {
-            cout << "->" << s[i];
+            //cout << "->" << s[i];
             // prepocitej z velkych do malych do 0-25
             int letter = (std::tolower((int)s[i]) - 'a');
 
@@ -119,7 +124,7 @@ Node* endOfString(string s, bool isInsert)
             cout << s[i] << " neni pismeno" << endl;
         }
     }
-    cout << endl;
+    //cout << endl;
     return current;
 }
 
@@ -148,16 +153,77 @@ bool initDictionary()
     return true;
 }
 
-bool unloadDictionary()
+void unloadDictionary()
 {
     cout << "odstranuji slovnik" << endl;
     dictReady = false;
-    return true;
+    delNode(root);
 }
 
-bool spellcheck(string filepath, bool fileOutput = false)
+bool spellcheck(const char* filepath, bool fileOutput = false)
 {
-    cout << "oteviram text" << endl;
+    // pocet chyb
+    int counter = 0;
+    ifstream textfile;
+    ofstream output;
+    textfile.open(filepath);
+    if (fileOutput == true)
+    {
+        // priprav soubor pro vypis
+        output.open(OUTPATH);
+        output << "Spellcheck textu z " << filepath << endl << " Chybna slova:" << endl;
+    }
+    else
+    {
+        cout << "Spellcheck textu z " << filepath << endl << " Chybna slova:" << endl;
+    }
+
+    if (textfile.is_open() && (fileOutput == output.is_open())) // nerovnost znamena chybu
+    {
+        cout << "oteviram text" << endl;
+        for (string word; textfile >> word; )
+        {
+            // zkontroluj jestli slovo je ve slovniku
+            Node*lastsearch = endOfString(word, false);
+            if (lastsearch == NULL)
+            {
+                // node neexistuje
+                if (fileOutput == true)
+                    output << word << endl;
+                else
+                    cout << word << endl;
+                counter++;
+            }
+            else
+            {
+                // node existuje, ale neni to slovo
+                if (lastsearch->isWord == false)
+                {
+                    if (fileOutput == true)
+                        output << word << endl;
+                    else
+                        cout << word << endl;
+                    counter++;
+                }
+            }
+        }
+    }
+    else
+    {
+        // chyba
+        return false;
+    }
+
+    if (fileOutput == true)
+    {
+        // dokonci soubor pro vypis
+        output << "Spellcheck ukoncen. Chybnych slov: " << counter << endl;
+        output.close();
+    }
+    else
+    {
+        output << "Spellcheck ukoncen. Chybnych slov: " << counter << endl;
+    }
     return true;
 }
 
