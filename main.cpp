@@ -1,5 +1,7 @@
 #include <iostream>
 #include <string>
+#include <fstream>
+#include <ctype.h>
 
 /*
 * SLOVNIK
@@ -15,61 +17,235 @@
 
 using namespace std;
 
-struct node{
-    int letter;
+const int alphabetSize = 26;
+
+struct Node{
     bool isWord;
-    node*next[26];
+    Node*child[alphabetSize];
 };
 
-node*root = NULL;
+Node*root = NULL;
 
-void addNode(int k, string d)
+
+const char* DICTPATH = "dictionary.txt";
+Node* endOfString(string s, bool isInsert);
+bool dictReady = false;
+
+/*
+bool isPrefix(string s)
 {
-    // dva ukazatele, prvnim hledam, druhym hlidam predchozi node (abych to pak mohl spojit)
-    node* p = koren;
-    node* predchozi = NULL;
-
-    while (p!=NULL)
+    Node* current = endOfString(s, false);
+    if (current == NULL)
     {
-        if (k < p->klic)
-        {
-            predchozi = p;
-            p = p->mensi;
-        }
-        else if (k > p->klic)
-        {
-            predchozi = p;
-            p = p->vetsi;
-        }
-        else
-        {
-            // dorazili jsme na node, ktery uz je obsazeny, co delat?
-            return;
-        }
-    }
-    // klic nebyl ve stromu
-
-    node* u = new node;
-    u->klic = k;
-    u->data = d;
-    u->mensi = NULL;
-    u->vetsi = NULL;
-    if (predchozi == NULL)
-    {
-        koren = u;
-    }
-    else if (k < predchozi->klic)
-    {
-        predchozi->mensi = u;
+        return false;
     }
     else
     {
-        predchozi->vetsi = u;
+        return true;
+    }
+}
+*/
+
+bool isWord(string s)
+{
+    // hledej slovo ve slovniku
+    Node* current = endOfString(s, false);
+    if (current == NULL)
+    {
+        return false;
+    }
+    else
+    {
+        return current->isWord;
     }
 }
 
-int main()
+void insertWord(string s)
 {
-    cout << "Hello world!" << endl;
-    return 0;
+    Node* current = endOfString(s, true);
+    current->isWord = true;
+    cout << "slovo " << s << " pridano"  << endl;
+}
+
+//vyrobi novy node na miste current
+void initNode(Node* &current)
+{
+    current = new Node;
+    current->isWord = false;
+    for (int i = 0; i < alphabetSize; i++)
+    {
+       current->child[i] = NULL;
+    }
+}
+
+//hlavni funkce, vraci ukazatel na posledni pismeno hledaneho/pridavaneho slova
+//isInsert tells it whether it needs to initialize new Nodes
+Node* endOfString(string s, bool isInsert)
+{
+    Node* current = root;
+    Node* next = root;
+    for (unsigned int i = 0; i < s.length(); i++)
+    {
+        // iteruj pres string, zkontroluj nejdriv u kazdeho znaku jestli je to pismeno
+        // takhle se i zbavime carek a tecek
+        if (std::isalpha(s[i]) != 0)
+        {
+            cout << "->" << s[i];
+            // prepocitej z velkych do malych do 0-25
+            int letter = (std::tolower((int)s[i]) - 'a');
+
+            // posun next na dalsi pismeno
+            next = current->child[letter];
+            if (next == NULL)
+            {
+                // kdyz node neexistuje
+                if (isInsert == false)
+                {
+                    // kdyz hledame a node neni, neni to slovo
+                    return NULL;
+                }
+                else
+                {
+                   //pokud pridavame, vyrob novy
+                    initNode(next);
+                    current->child[letter] = next;
+                }
+            }
+            // posun i current
+            current = current->child[letter];
+        }
+        else
+        {
+            cout << s[i] << " neni pismeno" << endl;
+        }
+    }
+    cout << endl;
+    return current;
+}
+
+bool initDictionary()
+{
+    ifstream dictfile;
+    dictfile.open(DICTPATH);
+
+    if (dictfile.is_open())
+    {
+        cout << "vyrabim slovnik: " << endl;
+        for (string word; dictfile >> word; )
+        {
+            // pridavej slova do slovniku
+            insertWord(word);
+        }
+    }
+    else
+    {
+        return false;
+    }
+
+    //zadny problem, muzeme zavrit
+    dictfile.close();
+    dictReady = true;
+    return true;
+}
+
+bool unloadDictionary()
+{
+    cout << "odstranuji slovnik" << endl;
+    dictReady = false;
+    return true;
+}
+
+bool spellcheck(string filepath, bool fileOutput = false)
+{
+    cout << "oteviram text" << endl;
+    return true;
+}
+
+int main ()
+{
+    // vyrob strom
+
+    root = new Node;
+    root->isWord = false;
+    for (int i = 0; i < 26; i++)
+    {
+        root->child[i] = NULL;
+    }
+    // inicializuj
+    int prikaz = -1;
+
+
+    while (prikaz < 4)
+    {
+        prikaz = -1;
+
+        cout << "-------- ANGLICKY SLOVNIK ----------" << endl <<
+        "Zadejte prikaz:" << endl <<
+        "0 Nahrat slovnik z " << DICTPATH << endl <<
+        "1 Hledat konkretni slovo v slovniku " << endl <<
+        "2 Zkontrolovat text v text.txt" << endl <<
+        "3 Zkontrolovat text v text.txt a vypsat chyby do output.txt" << endl <<
+        "4 Exit" << endl;
+
+        while (!(0 <= prikaz && prikaz < 5))
+        {
+            // ziskej prikaz od uzivatele
+            cin >> prikaz;
+        }
+        if (prikaz == 0)
+        {
+            if (dictReady == false)
+            {
+                // nahraj slovnik - vyrob strom ze slov
+                bool success = initDictionary();
+                if (success == true)
+                    cout << "Uspesne nacten slovnik z " << DICTPATH << endl;
+                else
+                    cout << "Nastal problem pri nacitani slovniku z " << DICTPATH << endl;
+            }
+            else
+                cout << "slovnik jiz byl nacten!" << endl;
+        }
+        if (dictReady == true)
+        {
+            if (prikaz == 1)
+            {
+                string word;
+                cout << "zadejte slovo k vyhledani: ";
+                cin >> word;
+                cout << endl;
+                Node*last = endOfString(word, false);
+                cout << endl;
+                if (last == NULL)
+                    cout << word << " nenalezeno" << endl;
+                else
+                {
+                    if (last->isWord == true)
+                        cout << word << " nalezeno ve slovniku" << endl;
+                    else
+                        cout << word << " nenalezeno" << endl;
+                }
+
+            }
+            else if (prikaz == 2)
+            {
+                // zkontroluj text
+                spellcheck("text.txt", false);
+            }
+            else if (prikaz == 3)
+            {
+                spellcheck("text.txt", true);
+            }
+            else if (prikaz == 4)
+            {
+                unloadDictionary();
+                break;
+            }
+        }
+        else
+        {
+            cout << "pred provedenim tohoto prikazu nejdrive nactete slovnik!" << endl;
+        }
+
+    }
 }
