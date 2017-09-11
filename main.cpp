@@ -1,18 +1,21 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <sstream>
 #include <ctype.h>
 
 /*
-* SLOVNIK
-* anglický slovník implementovaný pomocí vyhledávacího stromu.
-* Každý uzel obsahuje písmeno a bool, zda-li cesta stromem konèící tímto písmenem je slovo.
-* Interakce s uživatelem probíhá pomocí konzole, slovník je schopný analyzovat text oddìlený mezerami a interpunkcí v souboru a najít chybnì napsaná slova.
-* Slovník výslednì chybnì napsaná slova buï pouze vypíše èi rovnou opraví v souboru, slovo po slovì.
-* Slovník je nutno nahrát do pamìti
+* SLOVNÍK
+* anglický slovník implementovaný pomocí stromu.
+* Každý uzel obsahuje písmeno a bool, zda-li cesta stromem končící tímto písmenem je slovo.
+* Interakce s uživatelem probíhá pomocí konzole, slovník je schopný analyzovat text oddělený mezerami a interpunkcí v souboru a najít chybně napsaná slova.
+* Slovník výsledně chybně napsaná slova vypíše buď do konzole anebo do souboru.
 * Mapa znaků:
 * 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25
 * a b c d e f g h i j k  l  m  n  o  p  q  r  s  t  u  v  w  x  y  z
+*
+* zdroj slovníku: https://github.com/dwyl/english-words
+*
 */
 
 using namespace std;
@@ -29,6 +32,7 @@ Node*root = NULL;
 
 const char* DICTPATH = "dictionary.txt";
 const char* OUTPATH = "output.txt";
+const char* TEXTPATH = "text.txt";
 Node* endOfString(string s, bool isInsert);
 bool dictReady = false;
 
@@ -130,6 +134,15 @@ Node* endOfString(string s, bool isInsert)
 
 bool initDictionary()
 {
+    // priprav strom
+    root = new Node;
+    root->isWord = false;
+    for (int i = 0; i < 26; i++)
+    {
+        root->child[i] = NULL;
+    }
+
+    // priprav soubor slovniku
     ifstream dictfile;
     dictfile.open(DICTPATH);
 
@@ -156,8 +169,8 @@ bool initDictionary()
 void unloadDictionary()
 {
     cout << "odstranuji slovnik" << endl;
-    dictReady = false;
     delNode(root);
+    dictReady = false;
 }
 
 bool spellcheck(const char* filepath, bool fileOutput = false)
@@ -180,7 +193,7 @@ bool spellcheck(const char* filepath, bool fileOutput = false)
 
     if (textfile.is_open() && (fileOutput == output.is_open())) // nerovnost znamena chybu
     {
-        cout << "oteviram text" << endl;
+        // cout << "oteviram text" << endl;
         for (string word; textfile >> word; )
         {
             // zkontroluj jestli slovo je ve slovniku
@@ -222,24 +235,16 @@ bool spellcheck(const char* filepath, bool fileOutput = false)
     }
     else
     {
-        output << "Spellcheck ukoncen. Chybnych slov: " << counter << endl;
+        cout << "Spellcheck ukoncen. Chybnych slov: " << counter << endl;
     }
     return true;
 }
 
 int main ()
 {
-    // vyrob strom
-
-    root = new Node;
-    root->isWord = false;
-    for (int i = 0; i < 26; i++)
-    {
-        root->child[i] = NULL;
-    }
     // inicializuj
     int prikaz = -1;
-
+    string vstup = "";
 
     while (prikaz < 4)
     {
@@ -248,16 +253,25 @@ int main ()
         cout << "-------- ANGLICKY SLOVNIK ----------" << endl <<
         "Zadejte prikaz:" << endl <<
         "0 Nahrat slovnik z " << DICTPATH << endl <<
-        "1 Hledat konkretni slovo v slovniku " << endl <<
-        "2 Zkontrolovat text v text.txt" << endl <<
-        "3 Zkontrolovat text v text.txt a vypsat chyby do output.txt" << endl <<
+        "1 Hledat konkretni slovo ve slovniku " << endl <<
+        "2 Zkontrolovat text v " << TEXTPATH << endl <<
+        "3 Zkontrolovat text v " << TEXTPATH << " a vypsat chyby do " << OUTPATH << endl <<
         "4 Exit" << endl;
 
-        while (!(0 <= prikaz && prikaz < 5))
+        while (true)
         {
-            // ziskej prikaz od uzivatele
-            cin >> prikaz;
+            // ziskej prikaz od uzivatele bezpecne (operator << to nezvlada sam):
+            getline(cin, vstup);
+
+            // This code converts from string to number safely.
+            stringstream myStream(vstup);
+            if (myStream >> prikaz)
+                if (0 <= prikaz && prikaz <= 4)
+                    break;
+
+            cout << "Spatne cislo, zadejte nejake znovu: " << endl;
         }
+
         if (prikaz == 0)
         {
             if (dictReady == false)
@@ -296,11 +310,11 @@ int main ()
             else if (prikaz == 2)
             {
                 // zkontroluj text
-                spellcheck("text.txt", false);
+                spellcheck(TEXTPATH, false);
             }
             else if (prikaz == 3)
             {
-                spellcheck("text.txt", true);
+                spellcheck(TEXTPATH, true);
             }
             else if (prikaz == 4)
             {
